@@ -3,7 +3,7 @@ os.environ["TOGETHER_API_KEY"] = "tgp_v1_-WVlTgjJk3ZFeT8mG-DbvkIXwZ4SL4SJxBsfTZo
 
 from together import Together
 client = Together()
-model_name = "google/gemma-2b-it"
+model_name = "mistralai/Mistral-7B-Instruct-v0.2"
 
 def translate_text_to_text(source_text, source_language, target_language):
     response = client.chat.completions.create(

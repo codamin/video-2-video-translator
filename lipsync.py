@@ -11,6 +11,8 @@ import copy
 import json
 from transformers import WhisperModel
 
+import sys
+sys.path.append("../MuseTalk")
 from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.utils import datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs
@@ -26,7 +28,8 @@ import subprocess
 from types import SimpleNamespace
 
 defaults = {
-    "ffmpeg_path": "/usr/local/lib/python3.10/dist-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v7.0.2",
+    # "ffmpeg_path": "/usr/local/lib/python3.10/dist-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v7.0.2",
+    "ffmpeg_path": "/opt/homebrew/bin/ffmpeg",
     "gpu_id": 0,
     "unet_model_path": "./models/musetalk/pytorch_model.bin",
     "vae_type": "sd-vae",
@@ -454,7 +457,7 @@ def lipsync(
         whisper=whisper,
         pe=pe,
         fp=fp,
-        args=args
+        # args=args
     )
     avatar.inference(
         audio_path=audio_path,
@@ -462,6 +465,8 @@ def lipsync(
         fps=args.fps,
         skip_save_images=args.skip_save_images
     )
+    
+    return avatar.video_out_path
 
 
 if __name__ == "__main__":
