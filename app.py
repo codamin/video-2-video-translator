@@ -22,29 +22,38 @@ language_map = {
     "en": "English",
     "es": "Spanish",
     "de": "German",
+    "zh": "Chinese",
+    "jp": "Japanese",
 }
 
 def process_video(video_input):
     print("######", video_input)
+    os.system(f"cp {video_input} video.mp4")
+    
     """Process the video to extract audio, transcribe it, generate text, and create speech."""
     subprocess.call(COMMAND.format(video_path=video_input), shell=True)
     #  source_speaker_file = "/Users/mdrpanwar/Downloads/test3.m4a" # en francias
-    src_lang = "en" # detect language TODO
-    tgt_lang = "fr" # TODO
-    target_language = "FR"  # Spanish
+    src_lang = "fr" # detect language TODO
+    tgt_lang = "en" # TODO
+
+    # src_lang = "fr"
+    # tgt_lang = "en"
+    target_language = "EN_NEWEST"  # Spanish
     
     
     # extract audio from video
     src_text = speech_to_text("audio/audio.wav", src_language=src_lang)
     tgt_text = translate_text_to_text(src_text, language_map[src_lang], language_map[tgt_lang])
+    print("Translated Text:", tgt_text)
     # text = "Hello, my name is cat and I am a dog" 
+    # tgt_tecxt = "Voici la derni_re fois que nous allons enregistrer, veuillez fonctionner car nous allons pr_senter maintenant."
     output_speech = text_to_speech(tgt_text, "audio/audio.wav", language=target_language) # takes text, and says t in provided voice
     
-    video_outpath = lipsync(video_path=video_input, audio_path=output_speech)
+    video_outpath = lipsync(video_path="/mnt/u14157_ic_nlp_001_files_nfs/nlpdata1/home/bkhmsi/vid2vid-translator/video-2-video-translator/video.mp4", audio_path=output_speech)
     # output_video = lip_sync(output_speech, source_speaker_file)
     
     os.remove("audio/audio.wav")  # Clean up the temporary audio file
-    return video_outpath
+    return "/mnt/u14157_ic_nlp_001_files_nfs/nlpdata1/home/bkhmsi/vid2vid-translator/video-2-video-translator/results/v15/avatars/avatar_001/vid_output/output.mp4"
    
 if __name__ == "__main__":
     iface = gr.Interface(
@@ -62,4 +71,4 @@ if __name__ == "__main__":
     )
     
    
-    iface.launch(server_port=8000) # Specify the desired port here
+    iface.launch(server_name="0.0.0.0", server_port=64286) # Specify the desired port here

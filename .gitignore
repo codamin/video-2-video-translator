@@ -1,0 +1,9 @@
+*.mp4
+*.pyc
+MuseTalk
+OpenVoice
+audio
+checkpoints*
+outputs*
+processed
+results

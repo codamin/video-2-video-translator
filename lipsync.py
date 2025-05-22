@@ -12,7 +12,7 @@ import json
 from transformers import WhisperModel
 
 import sys
-sys.path.append("../MuseTalk")
+sys.path.append("MuseTalk")
 from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.utils import datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs
@@ -29,19 +29,20 @@ from types import SimpleNamespace
 
 defaults = {
     # "ffmpeg_path": "/usr/local/lib/python3.10/dist-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v7.0.2",
-    "ffmpeg_path": "/opt/homebrew/bin/ffmpeg",
+    "ffmpeg_path": "/mnt/u14157_ic_nlp_001_files_nfs/nlpdata1/home/bkhmsi/miniconda3/envs/hackathon/bin/ffmpeg",
     "gpu_id": 0,
-    "unet_model_path": "./models/musetalk/pytorch_model.bin",
+    "unet_model_path": "MuseTalk/models/musetalk/pytorch_model.bin",
     "vae_type": "sd-vae",
-    "unet_config": "./models/musetalk/musetalk.json",
-    "whisper_dir": "./models/whisper",
+    "unet_config": "MuseTalk/models/musetalk/musetalk.json",
+    "whisper_dir": "MuseTalk/models/whisper",
     "version": "v15",
     "left_cheek_width": 90,
     "right_cheek_width": 90,
     "batch_size": 20,
     "fps": 25,
     "skip_save_images": True,
-    "inference_config": "configs/inference/realtime.yaml"
+    "inference_config": "MuseTalk/configs/inference/realtime.yaml",
+    "extra_margin": 0,
 }
 default_cfg = SimpleNamespace(**defaults)
 
@@ -107,6 +108,7 @@ class Avatar:
         self.audio_processor = audio_processor
         self.weight_dtype = unet.model.dtype
         self.device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
+        # self.device = "cpu"
         self.timesteps = torch.tensor([0], device=self.device)
         self.whisper = whisper
         self.pe = pe
@@ -197,6 +199,7 @@ class Avatar:
         idx = -1
         # maker if the bbox is not sufficient
         coord_placeholder = (0.0, 0.0, 0.0, 0.0)
+        # breakpoint()
         for bbox, frame in zip(coord_list, frame_list):
             idx = idx + 1
             if bbox == coord_placeholder:
@@ -207,6 +210,10 @@ class Avatar:
                 y2 = min(y2, frame.shape[0])
                 coord_list[idx] = [x1, y1, x2, y2]  # 更新coord_list中的bbox
             crop_frame = frame[y1:y2, x1:x2]
+            if crop_frame.shape[0] <= 0 or crop_frame.shape[1] <= 0:
+                coord_list[idx] = coord_placeholder
+                continue
+                
             resized_crop_frame = cv2.resize(crop_frame, (256, 256), interpolation=cv2.INTER_LANCZOS4)
             latents = self.vae.get_latents_for_unet(resized_crop_frame)
             input_latent_list.append(latents)
@@ -225,6 +232,10 @@ class Avatar:
                 mode = self.args.parsing_mode
             else:
                 mode = "raw"
+
+            if x1 <= 0 or y1 <= 0 or x2 <= 0 or y2 <= 0:
+                x1, y1, x2, y2 = 0, 0, frame.shape[1], frame.shape[0]
+
             mask, crop_box = get_image_prepare_material(frame, [x1, y1, x2, y2], fp=self.fp, mode=mode)
 
             cv2.imwrite(f"{self.mask_out_path}/{str(i).zfill(8)}.png", mask)
@@ -342,13 +353,13 @@ def lipsync(
     output_vid_name: str = "output",
     avatar_id: str = "avatar_001",
     version: str = "v15",
-    ffmpeg_path: str = "./ffmpeg-4.4-amd64-static/",
+    ffmpeg_path: str = "/mnt/u14157_ic_nlp_001_files_nfs/nlpdata1/home/bkhmsi/miniconda3/envs/hackathon/bin/ffmpeg",
     gpu_id: int = 0,
     vae_type: str = "sd-vae",
-    unet_config: str = "./models/musetalk/musetalk.json",
-    unet_model_path: str = "./models/musetalk/pytorch_model.bin",
-    whisper_dir: str = "./models/whisper",
-    inference_config: str = "configs/inference/realtime.yaml",
+    unet_config: str = "MuseTalk/models/musetalk/musetalk.json",
+    unet_model_path: str = "MuseTalk/models/musetalk/pytorch_model.bin",
+    whisper_dir: str = "MuseTalk/models/whisper",
+    inference_config: str = "MuseTalk/configs/inference/realtime.yaml",
     bbox_shift: int = 0,
     result_dir: str = './results',
     extra_margin: int = 10,
@@ -457,7 +468,7 @@ def lipsync(
         whisper=whisper,
         pe=pe,
         fp=fp,
-        # args=args
+        args=args
     )
     avatar.inference(
         audio_path=audio_path,
